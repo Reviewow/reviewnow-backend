@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReviewNow Agent</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #04090a; font-family: 'JetBrains Mono', 'Courier New', monospace; color: #e2e8f0; min-height: 100vh; }
+  .header { background: linear-gradient(135deg,#0a2a18,#060f08); border-bottom: 1px solid #1a3a1a; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 30px; height: 30px; background: #1d6a4a; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .logo-name { font-size: 15px; font-weight: 700; color: #f5a623; }
+  .logo-sub { font-size: 9px; color: #3a6a4a; letter-spacing: 0.12em; }
+  .stats { display: flex; gap: 8px; }
+  .stat { background: #0a140a; border: 1px solid #1a3a1a; border-radius: 6px; padding: 5px 12px; text-align: center; }
+  .stat-val { font-size: 16px; font-weight: 700; }
+  .stat-lbl { font-size: 9px; color: #4a5568; letter-spacing: 0.1em; }
+  .tabs { background: #060d06; border-bottom: 1px solid #1a3a1a; display: flex; padding: 0 24px; }
+  .tab { background: none; border: none; cursor: pointer; padding: 11px 16px; font-size: 11px; font-weight: 700; color: #3a6a4a; border-bottom: 2px solid transparent; letter-spacing: 0.06em; font-family: inherit; transition: all 0.15s; }
+  .tab.active { color: #f5a623; border-bottom-color: #f5a623; }
+  .status-badge { display: none; align-items: center; gap: 6px; margin-left: auto; padding: 0 16px; font-size: 9px; color: #34d399; letter-spacing: 0.12em; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #34d399; animation: pulse 1s infinite; }
+  .content { padding: 24px; max-width: 860px; margin: 0 auto; }
+  .section-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .section-sub { font-size: 11px; color: #3a6a4a; margin-bottom: 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: #0a140a; border: 1px solid #1a3a1a; border-radius: 10px; padding: 18px; }
+  .card-title { font-size: 10px; font-weight: 700; color: #f5a623; letter-spacing: 0.12em; margin-bottom: 14px; }
+  .field { margin-bottom: 12px; }
+  label { display: block; font-size: 10px; font-weight: 700; color: #3a7a4a; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; }
+  input, select, textarea { width: 100%; background: #0a1a0a; border: 1px solid #1a3a1a; border-radius: 7px; padding: 9px 12px; color: #e2e8f0; font-size: 12px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+  input:focus, select:focus, textarea:focus { border-color: #1d6a4a; }
+  .hint { font-size: 9px; color: #4a5568; margin-top: 3px; }
+  .grid-half { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .safeguards { background: #060d06; border: 1px solid #1a3a1a; border-radius: 7px; padding: 10px; margin-top: 4px; }
+  .safeguards-title { font-size: 9px; color: #3a6a4a; font-weight: 700; margin-bottom: 5px; letter-spacing: 0.1em; }
+  .safeguard-item { font-size: 10px; color: #34d399; margin-bottom: 2px; }
+  textarea { min-height: 110px; resize: vertical; line-height: 1.6; }
+  .btn { width: 100%; padding: 13px; background: linear-gradient(135deg,#1d6a4a,#0a3a28); border: 1px solid #2a8a5a; border-radius: 9px; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.06em; font-family: inherit; transition: all 0.2s; }
+  .btn:disabled { background: #0a1a0a; border-color: #1a3a1a; color: #3a5a3a; cursor: not-allowed; }
+  .btn-sm { width: auto; padding: 9px 20px; border-radius: 7px; font-size: 11px; }
+  .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .table { border: 1px solid #1a3a1a; border-radius: 9px; overflow: hidden; }
+  .table-head { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.2fr 2fr; background: #0a2a18; padding: 8px 14px; font-size: 9px; color: #3a6a4a; font-weight: 700; letter-spacing: 0.1em; }
+  .table-row { display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.2fr 2fr; padding: 8px 14px; font-size: 11px; border-bottom: 1px solid #0a140a; align-items: center; }
+  .table-row:nth-child(odd) { background: #040909; }
+  .table-row:nth-child(even) { background: #060b06; }
+  .phone { color: #718096; font-size: 10px; }
+  .channel { color: #a0aec0; font-size: 10px; }
+  .msg-preview { color: #4a5568; font-size: 10px; font-style: italic; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .logs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .logs-box { background: #040909; border: 1px solid #1a3a1a; border-radius: 9px; padding: 14px; min-height: 360px; max-height: 460px; overflow-y: auto; }
+  .log-entry { display: flex; gap: 10px; padding: 5px 0; border-bottom: 1px solid #ffffff05; }
+  .log-time { color: #2a4a2a; font-size: 10px; white-space: nowrap; margin-top: 1px; }
+  .log-msg { font-size: 11px; line-height: 1.5; }
+  .log-info { color: #8a9a8a; }
+  .log-success { color: #34d399; }
+  .log-warn { color: #f5a623; }
+  .log-error { color: #f87171; }
+  .complete-box { margin-top: 14px; background: #0a2a18; border: 1px solid #1d6a4a; border-radius: 9px; padding: 18px; text-align: center; }
+  .empty-state { text-align: center; padding: 60px; color: #4a5568; }
+  .empty-icon { font-size: 28px; margin-bottom: 10px; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #040909; }
+  ::-webkit-scrollbar-thumb { background: #1a3a1a; border-radius: 3px; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">&#11088;</div>
+    <div><div class="logo-name">ReviewNow</div><div class="logo-sub">REVIEW REQUEST AGENT</div></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="stat-total" style="color:#a0aec0">0</div><div class="stat-lbl">TOTAL</div></div>
+    <div class="stat"><div class="stat-val" id="stat-sent" style="color:#34d399">0</div><div class="stat-lbl">SENT</div></div>
+    <div class="stat"><div class="stat-val" id="stat-skipped" style="color:#818cf8">0</div><div class="stat-lbl">SKIPPED</div></div>
+    <div class="stat"><div class="stat-val" id="stat-errors" style="color:#f87171">0</div><div class="stat-lbl">ERRORS</div></div>
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="showTab('config')">&#9881; Config</button>
+  <button class="tab" onclick="showTab('preview')">&#128065; Preview</button>
+  <button class="tab" onclick="showTab('logs')">&#128203; Logs</button>
+  <div class="status-badge" id="status-badge"><div class="status-dot"></div>RUNNING</div>
+</div>
+<div class="content">
+  <div class="tab-content active" id="tab-config">
+    <div class="section-title">Agent Configuration</div>
+    <div class="section-sub">Backend: <span style="color:#34d399">https://reviewnow-backend.onrender.com &#10003;</span></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">CLIENT SETTINGS</div>
+        <div class="field"><label>Business Name *</label><input id="businessName" placeholder="e.g. Garage Dupont" /></div>
+        <div class="field"><label>Google Review Link</label><input id="reviewLink" placeholder="https://g.page/r/..." /></div>
+        <div class="grid-half">
+          <div class="field"><label>Channel</label><select id="channel"><option value="whatsapp">WhatsApp</option><option value="sms">SMS</option></select></div>
+          <div class="field"><label>Language</label><select id="language"><option value="nl">Dutch (NL)</option><option value="fr">French (FR)</option><option value="en">English</option></select></div>
+        </div>
+        <div class="safeguards">
+          <div class="safeguards-title">SAFEGUARDS ACTIVE</div>
+          <div class="safeguard-item">&#10003; Duplicate phone check</div>
+          <div class="safeguard-item">&#10003; Already-sent rows skipped</div>
+          <div class="safeguard-item">&#10003; AI personalised messages</div>
+          <div class="safeguard-item">&#10003; Negative reply detection</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">TWILIO CREDENTIALS</div>
+        <div class="field"><label>Account SID</label><input id="twilioSid" type="password" placeholder="ACbc5b95a5d..." /></div>
+        <div class="field"><label>Auth Token</label><input id="twilioToken" type="password" placeholder="your auth token" /></div>
+        <div class="field"><label>From Number</label><input id="twilioFrom" placeholder="whatsapp:+14155238886" value="whatsapp:+14155238886" /><div class="hint">Sandbox: whatsapp:+14155238886</div></div>
+        <div class="field"><label>Alert Email</label><input id="alertEmail" placeholder="hello@reviewnow.be" value="hello@reviewnow.be" /></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">CUSTOMER DATA - PASTE FROM GOOGLE SHEETS</div>
+      <div style="font-size:11px;color:#3a6a4a;margin-bottom:10px">Open your Google Sheet, select all (Ctrl+A), copy (Ctrl+C), click below, paste (Ctrl+V)</div>
+      <textarea id="csvText" placeholder="Customer name&#9;Phone number&#9;Channel&#9;Status&#10;Teele Tamme&#9;+32496754801&#9;WhatsApp&#9;"></textarea>
+    </div>
+    <button class="btn" id="loadBtn" onclick="loadCustomers()">&#8594; Load Customers &amp; Preview</button>
+  </div>
+  <div class="tab-content" id="tab-preview">
+    <div class="preview-header">
+      <div><div class="section-title">Customer Preview</div><div class="section-sub" id="preview-sub">0 customers loaded</div></div>
+      <button class="btn btn-sm" id="runBtn" onclick="runAgent()" style="display:none">&#9654; Run Agent</button>
+    </div>
+    <div id="preview-empty" class="empty-state"><div class="empty-icon">&#128203;</div><div>No customers loaded - paste data in Config first</div></div>
+    <div id="preview-table" style="display:none">
+      <div class="table">
+        <div class="table-head"><div>CUSTOMER</div><div>PHONE</div><div>CHANNEL</div><div>STATUS</div><div>MESSAGE</div></div>
+        <div id="table-body"></div>
+      </div>
+      <button class="btn" id="runBtn2" onclick="runAgent()" style="margin-top:14px">&#9654; Start Agent</button>
+    </div>
+  </div>
+  <div class="tab-content" id="tab-logs">
+    <div class="logs-header">
+      <div class="section-title">Agent Logs</div>
+      <button style="background:none;border:1px solid #1a3a1a;border-radius:5px;color:#3a6a4a;padding:3px 10px;font-size:10px;cursor:pointer;font-family:inherit" onclick="clearLogs()">Clear</button>
+    </div>
+    <div class="logs-box" id="logs-box"><div style="color:#4a5568;font-size:11px;text-align:center;padding-top:40px">No logs yet - run the agent to see activity</div></div>
+    <div class="complete-box" id="complete-box" style="display:none">
+      <div style="font-size:20px;margin-bottom:6px">&#127881;</div>
+      <div style="font-size:14px;font-weight:700;color:#34d399;margin-bottom:3px">Complete!</div>
+      <div style="font-size:11px;color:#3a6a4a" id="complete-stats"></div>
+      <button class="btn btn-sm" style="margin-top:12px" onclick="resetAgent()">+ New Run</button>
+    </div>
+  </div>
+</div>
+<script>
+const BACKEND='https://reviewnow-backend.onrender.com';
+let customers=[],stats={total:0,sent:0,skipped:0,errors:0},running=false;
+function showTab(name){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');event.target.classList.add('active');}
+function updateStats(){document.getElementById('stat-total').textContent=stats.total;document.getElementById('stat-sent').textContent=stats.sent;document.getElementById('stat-skipped').textContent=stats.skipped;document.getElementById('stat-errors').textContent=stats.errors;}
+function badge(s){const m={pending:['#0a2a18','#4ade80','Pending'],sending:['#2a1a00','#f5a623','Sending...'],sent:['#0a2a18','#34d399','Sent OK'],duplicate:['#0a0a2a','#818cf8','Duplicate'],error:['#2a0a0a','#f87171','Error'],skipped:['#1a1a1a','#6b7280','Skipped']}[s]||['#0a2a18','#4ade80','Pending'];return '<span class="badge" style="background:'+m[0]+';color:'+m[1]+';border:1px solid '+m[1]+'44">'+m[2]+'</span>';}
+function renderTable(){document.getElementById('table-body').innerHTML=customers.map((c,i)=>'<div class="table-row" id="row-'+i+'"><div style="font-weight:600">'+c.name+'</div><div class="phone">'+c.phone+'</div><div class="channel">'+c.channel+'</div><div id="badge-'+i+'">'+badge(c._status)+'</div><div class="msg-preview" id="msg-'+i+'">'+(c._msg?c._msg.substring(0,45)+'...':'AI-generated on send')+'</div></div>').join('');}
+function loadCustomers(){const csv=document.getElementById('csvText').value.trim(),biz=document.getElementById('businessName').value.trim();if(!biz){alert('Please fill in the Business Name');return;}if(!csv){alert('Please paste customer data');return;}const lines=csv.split('\n').filter(l=>l.trim());if(lines.length<2){alert('Need header + one customer row');return;}const sep=lines[0].includes('\t')?'\t':',';const headers=lines[0].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,''));const nameIdx=headers.findIndex(h=>h.includes('name'));const phoneIdx=headers.findIndex(h=>h.includes('phone'));const channelIdx=headers.findIndex(h=>h.includes('channel'));const statusIdx=headers.findIndex(h=>h.includes('status'));if(nameIdx===-1||phoneIdx===-1){alert('Could not find Name and Phone columns. Headers: '+headers.join(', '));return;}const seen=new Set();const defaultCh=document.getElementById('channel').value;customers=lines.slice(1).map(line=>{const vals=line.split(sep).map(v=>v.trim().replace(/"/g,''));const name=vals[nameIdx]||'';const phone=(vals[phoneIdx]||'').replace(/\s/g,'');const ch=(channelIdx>=0?vals[channelIdx]:defaultCh).toLowerCase()||defaultCh;const status=statusIdx>=0?(vals[statusIdx]||'').toLowerCase():'';const isDone=['sent','opted out','positive','negative'].includes(status);const isDup=seen.has(phone)&&phone!=='';if(phone)seen.add(phone);return{name,phone,channel:ch,_status:isDone?'skipped':isDup?'duplicate':'pending',_msg:''};}).filter(r=>r.name&&r.phone);if(!customers.length){alert('No valid rows found');return;}stats={total:customers.length,sent:0,skipped:customers.filter(c=>c._status!=='pending').length,errors:0};updateStats();document.getElementById('preview-sub').textContent=customers.length+' loaded - '+customers.filter(c=>c._status==='pending').length+' will receive messages';document.getElementById('preview-empty').style.display='none';document.getElementById('preview-table').style.display='block';document.getElementById('runBtn').style.display='block';document.getElementById('runBtn2').textContent='Start Agent - Send '+customers.filter(c=>c._status==='pending').length+' Messages';renderTable();showTab('preview');document.querySelectorAll('.tab')[1].classList.add('active');document.querySelectorAll('.tab')[0].classList.remove('active');}
+function addLog(msg,type='info'){const box=document.getElementById('logs-box');if(box.querySelector('div[style]'))box.innerHTML='';const t=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});const el=document.createElement('div');el.className='log-entry';el.innerHTML='<span class="log-time">'+t+'</span><span class="log-msg log-'+type+'">'+msg+'</span>';box.appendChild(el);box.scrollTop=box.scrollHeight;}
+function clearLogs(){document.getElementById('logs-box').innerHTML='<div style="color:#4a5568;font-size:11px;text-align:center;padding-top:40px">Cleared</div>';}
+async function callClaude(name,bizName,reviewLink,lang){const langName=lang==='nl'?'Dutch':lang==='fr'?'French':'English';const optOut=lang==='nl'?'Antwoord STOP om te stoppen.':lang==='fr'?'Repondez STOP pour vous desabonner.':'Reply STOP to unsubscribe.';const system='You are ReviewNow. Write a SHORT warm personalised '+langName+' WhatsApp/SMS review request for '+name+' who just used '+bizName+'. Max 300 chars. Include: '+(reviewLink||'https://g.page/r/example')+'. End with '+optOut+' Return ONLY the message.';const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system,messages:[{role:'user',content:'Review request for '+name}]})});const data=await res.json();return(data.content?.[0]?.text||'').trim();}
+async function runAgent(){if(running)return;running=true;document.getElementById('runBtn').style.display='none';document.getElementById('runBtn2').style.display='none';document.getElementById('status-badge').style.display='flex';document.getElementById('complete-box').style.display='none';showTab('logs');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab')[2].classList.add('active');const biz=document.getElementById('businessName').value;const link=document.getElementById('reviewLink').value;const lang=document.getElementById('language').value;const sid=document.getElementById('twilioSid').value;const token=document.getElementById('twilioToken').value;const from=document.getElementById('twilioFrom').value;addLog('Agent started - '+customers.filter(c=>c._status==='pending').length+' messages to send','success');addLog('Backend: '+BACKEND,'info');let sent=0,errs=0;for(let i=0;i<customers.length;i++){const c=customers[i];if(c._status!=='pending'){addLog('Skipped '+c.name+' ('+c._status+')','warn');continue;}customers[i]._status='sending';document.getElementById('badge-'+i).innerHTML=badge('sending');addLog('Generating message for '+c.name+'...');await new Promise(r=>setTimeout(r,400));try{const msg=await callClaude(c.name,biz,link,lang);addLog('Message: "'+msg.substring(0,100)+(msg.length>100?'...':'')+'"','info');const res=await fetch(BACKEND+'/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:c.phone,message:msg,channel:c.channel,twilioSid:sid,twilioToken:token,twilioFrom:from})});const data=await res.json();if(!data.success)throw new Error(data.error||'Send failed');customers[i]._status='sent';customers[i]._msg=msg;document.getElementById('badge-'+i).innerHTML=badge('sent');document.getElementById('msg-'+i).textContent=msg.substring(0,45)+'...';stats.sent++;updateStats();addLog('SENT to '+c.name+' ('+c.phone+') - SID: '+data.sid,'success');sent++;}catch(e){customers[i]._status='error';document.getElementById('badge-'+i).innerHTML=badge('error');stats.errors++;updateStats();addLog('Failed: '+c.name+' - '+e.message,'error');errs++;}await new Promise(r=>setTimeout(r,300));}running=false;document.getElementById('status-badge').style.display='none';addLog('Complete - Sent: '+sent+' | Errors: '+errs,'success');document.getElementById('complete-box').style.display='block';document.getElementById('complete-stats').textContent=stats.sent+' sent - '+stats.skipped+' skipped - '+stats.errors+' errors';}
+function resetAgent(){customers=[];stats={total:0,sent:0,skipped:0,errors:0};updateStats();document.getElementById('csvText').value='';document.getElementById('preview-empty').style.display='block';document.getElementById('preview-table').style.display='none';document.getElementById('complete-box').style.display='none';document.getElementById('logs-box').innerHTML='<div style="color:#4a5568;font-size:11px;text-align:center;padding-top:40px">No logs yet</div>';showTab('config');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab')[0].classList.add('active');}
+</script>
+</body>
+</html>
